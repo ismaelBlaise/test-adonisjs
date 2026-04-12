@@ -16,4 +16,26 @@ export interface ApiDefinition {
       show: typeof routes['profile.profile.show']
     }
   }
+  posts: {
+    index: typeof routes['posts.index']
+    show: typeof routes['posts.show']
+    comments: {
+      index: typeof routes['posts.comments.index']
+      store: typeof routes['posts.comments.store']
+    }
+    views: {
+      store: typeof routes['posts.views.store']
+    }
+    store: typeof routes['posts.store']
+    update: typeof routes['posts.update']
+    destroy: typeof routes['posts.destroy']
+    likes: {
+      store: typeof routes['posts.likes.store']
+      destroy: typeof routes['posts.likes.destroy']
+    }
+  }
+  comments: {
+    update: typeof routes['comments.update']
+    destroy: typeof routes['comments.destroy']
+  }
 }
