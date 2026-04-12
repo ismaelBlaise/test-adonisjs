@@ -12,6 +12,8 @@ tmp/*
 
 # Frontend assets compiled code
 public/assets
+frontend/dist
+frontend/tsconfig.tsbuildinfo
 
 # Build tools specific
 npm-debug.log

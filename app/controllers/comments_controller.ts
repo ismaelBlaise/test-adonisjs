@@ -1,76 +1,30 @@
-import Post from '#models/post'
-import Comment from '#models/comment'
+import CommentsService from '#services/comments_service'
+import { ok } from '#http/responses'
 import { createCommentValidator, updateCommentValidator } from '#validators/comment'
 import type { HttpContext } from '@adonisjs/core/http'
 
 export default class CommentsController {
-  async index({ params, response }: HttpContext) {
-    const post = await Post.find(params.post_id)
+  private commentsService = new CommentsService()
 
-    if (!post) {
-      return response.notFound({ message: 'Post not found' })
-    }
-
-    return Comment.query().where('post_id', post.id).preload('author').orderBy('created_at', 'asc')
+  async index({ params }: HttpContext) {
+    return ok(await this.commentsService.listForPost(params.post_id))
   }
 
   async store({ auth, params, request, response }: HttpContext) {
-    const user = auth.getUserOrFail()
-    const post = await Post.find(params.post_id)
-
-    if (!post) {
-      return response.notFound({ message: 'Post not found' })
-    }
-
     const payload = await request.validateUsing(createCommentValidator)
-    const comment = await Comment.create({
-      postId: post.id,
-      userId: user.id,
-      body: payload.body,
-    })
+    const comment = await this.commentsService.create(auth.getUserOrFail(), params.post_id, payload)
 
-    await comment.load('author')
-
-    return response.created(comment)
+    return response.created(ok(comment))
   }
 
-  async update({ auth, params, request, response }: HttpContext) {
-    const user = auth.getUserOrFail()
-    const comment = await Comment.find(params.id)
-
-    if (!comment) {
-      return response.notFound({ message: 'Comment not found' })
-    }
-
-    if (comment.userId !== user.id) {
-      return response.forbidden({ message: 'Only the author can update this comment' })
-    }
-
+  async update({ auth, params, request }: HttpContext) {
     const payload = await request.validateUsing(updateCommentValidator)
-    comment.body = payload.body
-    await comment.save()
-    await comment.load('author')
 
-    return comment
+    return ok(await this.commentsService.update(auth.getUserOrFail(), params.id, payload))
   }
 
   async destroy({ auth, params, response }: HttpContext) {
-    const user = auth.getUserOrFail()
-    const comment = await Comment.query().where('id', params.id).preload('post').first()
-
-    if (!comment) {
-      return response.notFound({ message: 'Comment not found' })
-    }
-
-    const isCommentAuthor = comment.userId === user.id
-    const isPostAuthor = comment.post.userId === user.id
-
-    if (!isCommentAuthor && !isPostAuthor) {
-      return response.forbidden({ message: 'Only the comment author or post author can delete it' })
-    }
-
-    await comment.delete()
-
+    await this.commentsService.delete(auth.getUserOrFail(), params.id)
     return response.noContent()
   }
 }
