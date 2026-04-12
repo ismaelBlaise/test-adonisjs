@@ -136,6 +136,24 @@ Your API will be running at `http://localhost:3333`
 - `POST /api/v1/auth/login` - Login and get access token
 - `POST /api/v1/auth/logout` - Logout (requires authentication)
 - `GET /api/v1/account/profile` - Get current user profile (requires authentication)
+- `GET /api/v1/posts` - List blog posts
+- `GET /api/v1/posts/:id` - Show a blog post with comments
+- `POST /api/v1/posts` - Create a blog post with cover/gallery images (requires authentication)
+- `PATCH /api/v1/posts/:id` - Update your blog post (requires authentication)
+- `DELETE /api/v1/posts/:id` - Delete your blog post (requires authentication)
+- `POST /api/v1/posts/:id/views` - Increment the view counter
+- `POST /api/v1/posts/:id/likes` - Like a blog post once per user (requires authentication)
+- `DELETE /api/v1/posts/:id/likes` - Remove your like (requires authentication)
+- `GET /api/v1/posts/:post_id/comments` - List comments for a blog post
+- `POST /api/v1/posts/:post_id/comments` - Add a comment (requires authentication)
+- `PATCH /api/v1/comments/:id` - Update your comment (requires authentication)
+- `DELETE /api/v1/comments/:id` - Delete your comment, or a comment on your post (requires authentication)
+
+Use the token returned by signup/login as a bearer token:
+
+```http
+Authorization: Bearer <token>
+```
 
 ---
 
