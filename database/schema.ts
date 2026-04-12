@@ -43,6 +43,110 @@ export class AuthAccessTokenSchema extends BaseModel {
   declare updatedAt: DateTime | null
 }
 
+export class CommentSchema extends BaseModel {
+  static $columns = ['body', 'createdAt', 'id', 'postId', 'updatedAt', 'userId'] as const
+  $columns = CommentSchema.$columns
+  @column()
+  declare body: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare postId: number
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+  @column()
+  declare userId: number
+}
+
+export class PostImageSchema extends BaseModel {
+  static $columns = [
+    'altText',
+    'createdAt',
+    'id',
+    'postId',
+    'sortOrder',
+    'updatedAt',
+    'url',
+  ] as const
+  $columns = PostImageSchema.$columns
+  @column()
+  declare altText: string | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare postId: number
+  @column()
+  declare sortOrder: number
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+  @column()
+  declare url: string
+}
+
+export class PostLikeSchema extends BaseModel {
+  static $columns = ['createdAt', 'id', 'postId', 'updatedAt', 'userId'] as const
+  $columns = PostLikeSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare postId: number
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+  @column()
+  declare userId: number
+}
+
+export class PostSchema extends BaseModel {
+  static $columns = [
+    'body',
+    'coverImageUrl',
+    'createdAt',
+    'excerpt',
+    'id',
+    'isPublished',
+    'likesCount',
+    'publishedAt',
+    'slug',
+    'title',
+    'updatedAt',
+    'userId',
+    'viewsCount',
+  ] as const
+  $columns = PostSchema.$columns
+  @column()
+  declare body: string
+  @column()
+  declare coverImageUrl: string | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare excerpt: string | null
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare isPublished: boolean
+  @column()
+  declare likesCount: number
+  @column.dateTime()
+  declare publishedAt: DateTime | null
+  @column()
+  declare slug: string
+  @column()
+  declare title: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+  @column()
+  declare userId: number
+  @column()
+  declare viewsCount: number
+}
+
 export class UserSchema extends BaseModel {
   static $columns = ['createdAt', 'email', 'fullName', 'id', 'password', 'updatedAt'] as const
   $columns = UserSchema.$columns
