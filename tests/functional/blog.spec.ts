@@ -1,4 +1,5 @@
 import User from '#models/user'
+import type { PostDto } from '#dtos/post'
 import { test } from '@japa/runner'
 
 test.group('Blog API', () => {
@@ -37,33 +38,35 @@ test.group('Blog API', () => {
 
     createPostResponse.assertStatus(201)
     createPostResponse.assertBodyContains({
-      title: 'First Adonis Post',
-      slug: 'first-adonis-post',
-      coverImageUrl: 'https://example.com/images/adonis-cover.jpg',
-      isPublished: true,
-      author: {
-        email: 'ada@example.com',
+      data: {
+        title: 'First Adonis Post',
+        slug: 'first-adonis-post',
+        coverImageUrl: 'https://example.com/images/adonis-cover.jpg',
+        isPublished: true,
+        author: {
+          email: 'ada@example.com',
+        },
       },
     })
 
-    const post = createPostResponse.body()
+    const post = createPostResponse.body().data as PostDto
     assert.equal(post.viewsCount, 0)
     assert.equal(post.likesCount, 0)
     assert.lengthOf(post.images, 2)
 
     const viewResponse = await client.post(`/api/v1/posts/${post.id}/views`)
     viewResponse.assertStatus(200)
-    viewResponse.assertBodyContains({ viewsCount: 1 })
+    viewResponse.assertBodyContains({ data: { viewsCount: 1 } })
 
     const likeResponse = await client.post(`/api/v1/posts/${post.id}/likes`).loginAs(commenter)
     likeResponse.assertStatus(200)
-    likeResponse.assertBodyContains({ liked: true, likesCount: 1 })
+    likeResponse.assertBodyContains({ data: { liked: true, likesCount: 1 } })
 
     const duplicateLikeResponse = await client
       .post(`/api/v1/posts/${post.id}/likes`)
       .loginAs(commenter)
     duplicateLikeResponse.assertStatus(200)
-    duplicateLikeResponse.assertBodyContains({ liked: true, likesCount: 1 })
+    duplicateLikeResponse.assertBodyContains({ data: { liked: true, likesCount: 1 } })
 
     const createCommentResponse = await client
       .post(`/api/v1/posts/${post.id}/comments`)
@@ -74,20 +77,44 @@ test.group('Blog API', () => {
 
     createCommentResponse.assertStatus(201)
     createCommentResponse.assertBodyContains({
-      postId: post.id,
-      body: 'Nice article. The API flow works.',
-      author: {
-        email: 'grace@example.com',
+      data: {
+        postId: post.id,
+        body: 'Nice article. The API flow works.',
+        author: {
+          email: 'grace@example.com',
+        },
       },
     })
 
     const showPostResponse = await client.get(`/api/v1/posts/${post.id}`)
 
     showPostResponse.assertStatus(200)
-    assert.equal(showPostResponse.body().viewsCount, 1)
-    assert.equal(showPostResponse.body().likesCount, 1)
-    assert.lengthOf(showPostResponse.body().images, 2)
-    assert.equal(showPostResponse.body().comments.length, 1)
-    assert.equal(showPostResponse.body().comments[0].body, 'Nice article. The API flow works.')
+    const shownPost = showPostResponse.body().data as PostDto
+    assert.equal(shownPost.viewsCount, 1)
+    assert.equal(shownPost.likesCount, 1)
+    assert.lengthOf(shownPost.images, 2)
+    assert.equal(shownPost.comments?.length, 1)
+    assert.equal(shownPost.comments?.[0].body, 'Nice article. The API flow works.')
+  })
+
+  test('returns normalized validation errors', async ({ client }) => {
+    const user = await User.create({
+      fullName: 'Dorothy Vaughan',
+      email: 'dorothy@example.com',
+      password: 'password123',
+    })
+
+    const response = await client.post('/api/v1/posts').loginAs(user).json({
+      title: 'No',
+      body: 'short',
+    })
+
+    response.assertStatus(422)
+    response.assertBodyContains({
+      error: {
+        code: 'VALIDATION_ERROR',
+        status: 422,
+      },
+    })
   })
 })

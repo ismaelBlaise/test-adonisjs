@@ -1,4 +1,5 @@
 import vine from '@vinejs/vine'
+import type { Infer } from '@vinejs/vine/types'
 
 const title = () => vine.string().trim().minLength(3).maxLength(160)
 const excerpt = () => vine.string().trim().maxLength(255).nullable()
@@ -28,3 +29,13 @@ export const updatePostValidator = vine.create({
   body: body().optional(),
   isPublished: vine.boolean().optional(),
 })
+
+export const listPostsValidator = vine.create({
+  page: vine.number().withoutDecimals().min(1).optional(),
+  limit: vine.number().withoutDecimals().min(1).max(50).optional(),
+  q: vine.string().trim().maxLength(120).optional(),
+})
+
+export type CreatePostDto = Infer<typeof createPostValidator>
+export type UpdatePostDto = Infer<typeof updatePostValidator>
+export type ListPostsDto = Infer<typeof listPostsValidator>
