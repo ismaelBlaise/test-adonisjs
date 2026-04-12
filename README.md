@@ -126,9 +126,16 @@ npm run build
 
 # Start production server
 npm start
+
+# Run the React frontend in development
+npm run frontend:dev
+
+# Build the React frontend
+npm run frontend:build
 ```
 
 Your API will be running at `http://localhost:3333`
+Your frontend will be running at `http://localhost:5173`
 
 ### Available Endpoints
 
@@ -154,6 +161,53 @@ Use the token returned by signup/login as a bearer token:
 ```http
 Authorization: Bearer <token>
 ```
+
+### API Response Shape
+
+Successful responses use a stable envelope:
+
+```json
+{
+  "data": {}
+}
+```
+
+Paginated responses add metadata:
+
+```json
+{
+  "data": [],
+  "meta": {
+    "pagination": {}
+  }
+}
+```
+
+Errors are normalized:
+
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "The request payload is invalid",
+    "status": 422,
+    "details": []
+  }
+}
+```
+
+### Frontend
+
+The React frontend lives in `frontend/`.
+
+```bash
+cp frontend/.env.example frontend/.env
+npm install --prefix frontend
+npm --prefix frontend run dev
+npm run frontend:dev
+```
+
+The browser app supports signup/login, publishing image-based posts, likes, views, and comments.
 
 ---
 
