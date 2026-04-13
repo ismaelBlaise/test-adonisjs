@@ -57,7 +57,7 @@ export const api = {
     return request<AuthPayload>('/auth/signup', {
       method: 'POST',
       body: JSON.stringify(payload),
-    })
+    })   
   },
 
   login(payload: { email: string; password: string }) {
