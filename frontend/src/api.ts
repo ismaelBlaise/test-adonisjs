@@ -104,7 +104,7 @@ export const api = {
 
   unlikePost(id: number, token: string) {
     return request<{ liked: boolean; likesCount: number }>(
-      `/posts/${id}/likes`,
+      `/posts/${id}/likes`, 
       { method: 'DELETE' },
       token
     )
