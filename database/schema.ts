@@ -8,18 +8,7 @@ import { BaseModel, column } from '@adonisjs/lucid/orm'
 import { DateTime } from 'luxon'
 
 export class AuthAccessTokenSchema extends BaseModel {
-  static $columns = [
-    'abilities',
-    'createdAt',
-    'expiresAt',
-    'hash',
-    'id',
-    'lastUsedAt',
-    'name',
-    'tokenableId',
-    'type',
-    'updatedAt',
-  ] as const
+  static $columns = ['abilities', 'createdAt', 'expiresAt', 'hash', 'id', 'lastUsedAt', 'name', 'tokenableId', 'type', 'updatedAt'] as const
   $columns = AuthAccessTokenSchema.$columns
   @column()
   declare abilities: string
@@ -61,15 +50,7 @@ export class CommentSchema extends BaseModel {
 }
 
 export class PostImageSchema extends BaseModel {
-  static $columns = [
-    'altText',
-    'createdAt',
-    'id',
-    'postId',
-    'sortOrder',
-    'updatedAt',
-    'url',
-  ] as const
+  static $columns = ['altText', 'createdAt', 'id', 'postId', 'sortOrder', 'updatedAt', 'url'] as const
   $columns = PostImageSchema.$columns
   @column()
   declare altText: string | null
@@ -103,21 +84,7 @@ export class PostLikeSchema extends BaseModel {
 }
 
 export class PostSchema extends BaseModel {
-  static $columns = [
-    'body',
-    'coverImageUrl',
-    'createdAt',
-    'excerpt',
-    'id',
-    'isPublished',
-    'likesCount',
-    'publishedAt',
-    'slug',
-    'title',
-    'updatedAt',
-    'userId',
-    'viewsCount',
-  ] as const
+  static $columns = ['body', 'coverImageUrl', 'createdAt', 'excerpt', 'id', 'isPublished', 'likesCount', 'publishedAt', 'slug', 'title', 'updatedAt', 'userId', 'viewsCount'] as const
   $columns = PostSchema.$columns
   @column()
   declare body: string
