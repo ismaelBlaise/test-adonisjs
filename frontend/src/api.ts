@@ -9,6 +9,7 @@ import type {
 } from './types'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3333/api/v1'
+const REQUEST_TIMEOUT = 12000
 
 export class ApiError extends Error {
   code: string
@@ -23,18 +24,50 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, options: RequestInit = {}, token?: string) {
-  const response = await fetch(`${API_URL}${path}`, {
-    ...options,
-    headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
-  })
+function toApiError(error: unknown) {
+  if (error instanceof ApiError) {
+    return error
+  }
 
+  if (error instanceof DOMException && error.name === 'AbortError') {
+    return new ApiError({
+      code: 'REQUEST_TIMEOUT',
+      message: 'Le serveur met trop de temps a repondre. Reessaie dans un instant.',
+      status: 408,
+    })
+  }
+
+  if (error instanceof TypeError) {
+    return new ApiError({
+      code: 'NETWORK_ERROR',
+      message: 'Connexion impossible avec le serveur.',
+      status: 0,
+    })
+  }
+
+  return error
+}
+
+async function parseResponse<T>(response: Response) {
   if (response.status === 204) {
+    return undefined as T
+  }
+
+  const contentType = response.headers.get('content-type') ?? ''
+
+  if (!contentType.includes('application/json')) {
+    const message = response.ok
+      ? 'Reponse serveur inattendue.'
+      : `Erreur serveur ${response.status}.`
+
+    if (!response.ok) {
+      throw new ApiError({
+        code: 'HTTP_ERROR',
+        message,
+        status: response.status,
+      })
+    }
+
     return undefined as T
   }
 
@@ -45,6 +78,30 @@ async function request<T>(path: string, options: RequestInit = {}, token?: strin
   }
 
   return (payload as ApiEnvelope<T>).data
+}
+
+async function request<T>(path: string, options: RequestInit = {}, token?: string) {
+  const controller = new AbortController()
+  const timeout = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT)
+
+  try {
+    const response = await fetch(`${API_URL}${path}`, {
+      ...options,
+      signal: controller.signal,
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...options.headers,
+      },
+    })
+
+    return await parseResponse<T>(response)
+  } catch (error) {
+    throw toApiError(error)
+  } finally {
+    window.clearTimeout(timeout)
+  }
 }
 
 export const api = {
@@ -71,8 +128,19 @@ export const api = {
     return request<UserDto>('/account/profile', {}, token)
   },
 
-  listPosts() {
-    return request<PostDto[]>('/posts?limit=20')
+  logout(token: string) {
+    return request<{ message: string }>('/auth/logout', { method: 'POST' }, token)
+  },
+
+  listPosts(query = '') {
+    const search = new URLSearchParams({ limit: '30' })
+    const cleanQuery = query.trim()
+
+    if (cleanQuery) {
+      search.set('q', cleanQuery)
+    }
+
+    return request<PostDto[]>(`/posts?${search.toString()}`)
   },
 
   getPost(id: number) {
