@@ -8,6 +8,9 @@ export type ApiErrorEnvelope = {
     code: string
     message: string
     status: number
+    path?: string
+    method?: string
+    timestamp?: string
     details?: unknown
   }
 }

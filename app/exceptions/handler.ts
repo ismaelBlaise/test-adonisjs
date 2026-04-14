@@ -6,6 +6,9 @@ type ApiErrorPayload = {
     code: string
     message: string
     status: number
+    path: string
+    method: string
+    timestamp: string
     details?: unknown
   }
 }
@@ -27,9 +30,9 @@ export default class HttpExceptionHandler extends ExceptionHandler {
 
     if (httpError.code === 'E_VALIDATION_ERROR' && 'messages' in httpError) {
       return ctx.response.status(422).send(
-        this.toPayload({
+        this.toPayload(ctx, {
           code: 'VALIDATION_ERROR',
-          message: 'The request payload is invalid',
+          message: 'The request payload is invalid.',
           status: 422,
           details: httpError.messages,
         })
@@ -37,11 +40,11 @@ export default class HttpExceptionHandler extends ExceptionHandler {
     }
 
     return ctx.response.status(httpError.status).send(
-      this.toPayload({
+      this.toPayload(ctx, {
         code: this.normalizeCode(httpError.code),
         message: this.safeMessage(httpError.message, httpError.status),
         status: httpError.status,
-        details,
+        details: this.safeDetails(details, httpError.status),
       })
     )
   }
@@ -56,12 +59,18 @@ export default class HttpExceptionHandler extends ExceptionHandler {
     return super.report(error, ctx)
   }
 
-  private toPayload(error: ApiErrorPayload['error']): ApiErrorPayload {
+  private toPayload(
+    ctx: HttpContext,
+    error: Omit<ApiErrorPayload['error'], 'path' | 'method' | 'timestamp'>
+  ): ApiErrorPayload {
     return {
       error: {
         code: error.code,
         message: error.message,
         status: error.status,
+        path: ctx.request.url(),
+        method: ctx.request.method(),
+        timestamp: new Date().toISOString(),
         ...(error.details ? { details: error.details } : {}),
       },
     }
@@ -77,9 +86,17 @@ export default class HttpExceptionHandler extends ExceptionHandler {
 
   private safeMessage(message: string, status: number) {
     if (app.inProduction && status >= 500) {
-      return 'Internal server error'
+      return 'Internal server error.'
     }
 
-    return message
+    return message || 'Unexpected error.'
+  }
+
+  private safeDetails(details: unknown, status: number) {
+    if (app.inProduction && status >= 500) {
+      return undefined
+    }
+
+    return details
   }
 }

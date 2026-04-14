@@ -9,6 +9,7 @@ import type {
 } from './types'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3333/api/v1'
+const API_ORIGIN = new URL(API_URL, window.location.origin).origin
 const REQUEST_TIMEOUT = 12000
 
 export class ApiError extends Error {
@@ -83,17 +84,23 @@ async function parseResponse<T>(response: Response) {
 async function request<T>(path: string, options: RequestInit = {}, token?: string) {
   const controller = new AbortController()
   const timeout = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT)
+  const headers = new Headers(options.headers)
+
+  headers.set('Accept', 'application/json')
+
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`)
+  }
+
+  if (!(options.body instanceof FormData) && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json')
+  }
 
   try {
     const response = await fetch(`${API_URL}${path}`, {
       ...options,
       signal: controller.signal,
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...options.headers,
-      },
+      headers,
     })
 
     return await parseResponse<T>(response)
@@ -102,6 +109,18 @@ async function request<T>(path: string, options: RequestInit = {}, token?: strin
   } finally {
     window.clearTimeout(timeout)
   }
+}
+
+export function resolveAssetUrl(value: string | null | undefined) {
+  if (!value) {
+    return null
+  }
+
+  if (/^https?:\/\//i.test(value) || value.startsWith('data:')) {
+    return value
+  }
+
+  return `${API_ORIGIN}${value.startsWith('/') ? value : `/${value}`}`
 }
 
 export const api = {
@@ -153,6 +172,17 @@ export const api = {
       {
         method: 'POST',
         body: JSON.stringify(payload),
+      },
+      token
+    )
+  },
+
+  createPostWithFiles(payload: FormData, token: string) {
+    return request<PostDto>(
+      '/posts',
+      {
+        method: 'POST',
+        body: payload,
       },
       token
     )
